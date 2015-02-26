@@ -5,7 +5,7 @@ App.Models.Team = Backbone.Model.extend({
 	
 	initialize : function() {
         this.on('change:name',function(){    //绑定change事件，当数据改变时执行此回调函数
-            alert('changed');
+
         });
 	},
 	

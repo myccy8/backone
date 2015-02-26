@@ -8,7 +8,7 @@ App.Views.Team = Backbone.View.extend({
 	model : new App.Models.Team(),
 	
 	initialize : function() {
-		this.model.bind('change', this.render, this);
+        this.listenTo(this.model, "change", this.render);
 	},
 
 	render : function() {
