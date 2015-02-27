@@ -3,7 +3,7 @@ window.onload = function(){
         // 模型值校验
         validate:function(attrs){
             for(var key in attrs){
-                if(attrs[key] == ''){
+                if(attrs[key] === ''){
                     return key + "不能为空";
                 }
                 if(key == 'age' && isNaN(attrs.age)){
@@ -31,6 +31,9 @@ window.onload = function(){
             this.model.bind('change', this.render, this);
             // 每次删除模型之后自动移除UI
             this.model.bind('destroy', this.remove, this);
+            this.model.on("invalid", function(model, error) {
+                alert(error);
+            });
         },
         setText : function(){
             var model = this.model;
@@ -45,8 +48,9 @@ window.onload = function(){
             var obj = {};
             obj[input.attr('name')] = input.val();
             this.model.save(obj);
-            $(e.currentTarget).parent().prev().text(input.val());
+            $(e.currentTarget).parent().prev().text(this.model.get(input.attr('name')));
             $(e.currentTarget).parent().parent().removeClass("editing");
+
         },
         edit : function(e){
             // 给td加上editing样式
@@ -87,10 +91,14 @@ window.onload = function(){
             employee.bind('error',function(model,error){
                 alert(error);
             });
+            employee.set(attr)
             // set方法中会自动调用model的validate方法进行校验，如果不通过则返回false
-            if(employee.set(attr)){
+            if (employee.isValid()) {
                 Employees.create(employee);
+            }else{
+                alert(employee.validationError);
             }
+
         },
         addOne : function(employee){
             employee.set({"eid":employee.get("eid")||Employees.length});
