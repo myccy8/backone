@@ -7,7 +7,7 @@ window.onload = function(){
                     return key + "不能为空";
                 }
                 if(key == 'age' && isNaN(attrs.age)){
-                    return "年龄必须是数字";
+                    return "年龄必须是数字啊";
                 }
             }
         }
