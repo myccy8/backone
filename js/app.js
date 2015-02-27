@@ -3,11 +3,11 @@ window.onload = function(){
         // 模型值校验
         validate:function(attrs){
             for(var key in attrs){
-                if(attrs[key] == ''){
+                if(attrs[key] === ''){
                     return key + "不能为空";
                 }
                 if(key == 'age' && isNaN(attrs.age)){
-                    return "年龄必须是数字";
+                    return "年龄必须是数字啊";
                 }
             }
         }
@@ -15,12 +15,11 @@ window.onload = function(){
     window.EmployeeList = Backbone.Collection.extend({
         model : Employee,
         // 持久化到本地数据库
-        localStorage: new Store("employees")
+        localStorage: new Backbone.LocalStorage("employees")
     });
     window.Employees = new EmployeeList();
     window.EmployeeView = Backbone.View.extend({
         tagName : 'tr',
-        template : _.template($('#item-template').html()),
         events : {
             "dblclick td" : "edit",
             "blur input,select" : "close",
@@ -31,6 +30,9 @@ window.onload = function(){
             this.model.bind('change', this.render, this);
             // 每次删除模型之后自动移除UI
             this.model.bind('destroy', this.remove, this);
+            this.model.on("invalid", function(model, error) {
+                alert(error);
+            });
         },
         setText : function(){
             var model = this.model;
@@ -45,14 +47,16 @@ window.onload = function(){
             var obj = {};
             obj[input.attr('name')] = input.val();
             this.model.save(obj);
+            $(e.currentTarget).parent().prev().text(this.model.get(input.attr('name')));
             $(e.currentTarget).parent().parent().removeClass("editing");
+
         },
         edit : function(e){
             // 给td加上editing样式
             $(e.currentTarget).addClass('editing').find('input,select').focus();
         },
         render: function() {
-            $(this.el).html(this.template(this.model.toJSON()));
+            $(this.el).html(template('item-template',this.model.toJSON()));
             // 把每个单元格的值赋予隐藏的输入框
             this.setText();
             return this;
@@ -86,10 +90,14 @@ window.onload = function(){
             employee.bind('error',function(model,error){
                 alert(error);
             });
+            employee.set(attr)
             // set方法中会自动调用model的validate方法进行校验，如果不通过则返回false
-            if(employee.set(attr)){
+            if (employee.isValid()) {
                 Employees.create(employee);
+            }else{
+                alert(employee.validationError);
             }
+
         },
         addOne : function(employee){
             employee.set({"eid":employee.get("eid")||Employees.length});
