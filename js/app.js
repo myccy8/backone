@@ -45,6 +45,7 @@ window.onload = function(){
             var obj = {};
             obj[input.attr('name')] = input.val();
             this.model.save(obj);
+            $(e.currentTarget).parent().prev().text(input.val());
             $(e.currentTarget).parent().parent().removeClass("editing");
         },
         edit : function(e){
