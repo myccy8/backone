@@ -1,115 +1,47 @@
-window.onload = function(){
-    window.Employee = Backbone.Model.extend({
-        // 模型值校验
-        validate:function(attrs){
-            for(var key in attrs){
-                if(attrs[key] === ''){
-                    return key + "不能为空";
-                }
-                if(key == 'age' && isNaN(attrs.age)){
-                    return "年龄必须是数字啊";
-                }
-            }
-        }
-    });
-    window.EmployeeList = Backbone.Collection.extend({
-        model : Employee,
-        // 持久化到本地数据库
-        localStorage: new Backbone.LocalStorage("employees")
-    });
-    window.Employees = new EmployeeList();
-    window.EmployeeView = Backbone.View.extend({
-        tagName : 'tr',
-        events : {
-            "dblclick td" : "edit",
-            "blur input,select" : "close",
-            "click .del" : "clear"
-        },
-        initialize : function(){
-            // 每次更新模型后重新渲染
-            this.model.bind('change', this.render, this);
-            // 每次删除模型之后自动移除UI
-            this.model.bind('destroy', this.remove, this);
-            this.model.on("invalid", function(model, error) {
-                alert(error);
-            });
-        },
-        setText : function(){
-            var model = this.model;
-            this.input = $(this.el).find('input,select');
-            this.input.each(function(){
-                var input = $(this);
-                input.val(model.get(input.attr("name")));
-            });
-        },
-        close: function(e) {
-            var input = $(e.currentTarget);
-            var obj = {};
-            obj[input.attr('name')] = input.val();
-            this.model.save(obj);
-            $(e.currentTarget).parent().prev().text(this.model.get(input.attr('name')));
-            $(e.currentTarget).parent().parent().removeClass("editing");
+define('/scripts/app', function(require, exports) {
+  var Backbone = require('backbone');
 
-        },
-        edit : function(e){
-            // 给td加上editing样式
-            $(e.currentTarget).addClass('editing').find('input,select').focus();
-        },
-        render: function() {
-            $(this.el).html(template('item-template',this.model.toJSON()));
-            // 把每个单元格的值赋予隐藏的输入框
-            this.setText();
-            return this;
-        },
-        remove: function() {
-            $(this.el).remove();
-        },
-        clear: function() {
-            this.model.destroy();
+  //配置路由
+  var autoRouter = Backbone.Router.extend({
+    routes: {
+      '': 'home',
+      ':module/:action(/*condition)': 'loadmodule'
+    },
+    home: function() {
+      this.loadmodule('home', 'index');
+    },
+    //按照at/module/action(/conditions)格式的請求自動加載模塊
+    loadmodule: function(md, ac, con) {
+      //将参数字符串'a:123/b:456'转换为json对象{a:123, b:456}
+      var cj = {};
+      if(con && con.indexOf(':') > -1) {
+        con.replace(/(\w+)\s*:\s*([\w-]+)/g, function(a, b, c) {
+          b && (cj[b] = c);
+        });
+      } else {
+        cj = con;
+      }
+      //加载module目录下对应的模块
+      require.async(['/scripts/module', md, ac].join('/'), function(cb) {
+        if(cb) {
+          cb(cj);
+        } else {
+          alert('模塊加載失敗！');
         }
-    });
-    window.AppView = Backbone.View.extend({
-        el : $("#app"),
-        events : {
-            "click #add-btn" : "createOnEnter"
-        },
-        // 绑定collection的相关事件
-        initialize: function() {
-            Employees.bind('add', this.addOne, this);
-            // 调用fetch的时候触发reset
-            Employees.bind('reset', this.addAll, this);
-            Employees.fetch();
-        },
-        createOnEnter : function(e) {
-            var employee = new Employee();
-            var attr = {};
-            $('#emp-form input,#emp-form select').each(function(){
-                var input = $(this);
-                attr[input.attr('name')] = input.val();
-            });
-            employee.bind('error',function(model,error){
-                alert(error);
-            });
-            employee.set(attr)
-            // set方法中会自动调用model的validate方法进行校验，如果不通过则返回false
-            if (employee.isValid()) {
-                Employees.create(employee);
-            }else{
-                alert(employee.validationError);
-            }
+      })
+    }
+  });
 
-        },
-        addOne : function(employee){
-            employee.set({"eid":employee.get("eid")||Employees.length});
-            employee.bind('error',function(model,error){
-                alert(error);
-            });
-            var view = new EmployeeView({model:employee});
-            $(".emp-table tbody").append(view.render().el);
-        },
-        addAll : function(){
-            Employees.each(this.addOne);
-        }
-    });
-    window.App = new AppView();
-}
+  //定义全局变量App
+  window.App = {
+    Models: {},
+    Views: {},
+    Collections: {},
+    initialize: function() {
+      new autoRouter();
+      Backbone.history.start({pushState : true});
+    }
+  };
+
+  exports.run = App.initialize;
+})
