@@ -1,4 +1,4 @@
-App.Views.AppView = Backbone.View.extend({
+App.Views.Teams = Backbone.View.extend({
   el : $("#app"),
   events : {
     "click #add-btn" : "createOnEnter"
@@ -42,7 +42,7 @@ App.Views.AppView = Backbone.View.extend({
   }
 });
 
-App.Views.EmployeeView = Backbone.View.extend({
+App.Views.Team = Backbone.View.extend({
   tagName : 'tr',
   events : {
     "dblclick td" : "edit",
