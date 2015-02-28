@@ -4,7 +4,6 @@
 
 define('/scripts/module/home/index', ['backbone'], function(reuqire) {
   var Backbone = reuqire('backbone');
-
   App.Views.Home = Backbone.View.extend({
     el: '#app',
     initialize: function() {
